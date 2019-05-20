@@ -101,10 +101,11 @@
 	 * Angular app.
 	 *
 	 * @param $rootScope Host AngularJS app's $rootScope
+	 * @param $transitions UI-Router's TransitionService
 	 *
 	 * @return {boolean} True on success
 	 */
-	function bootstrap($rootScope) {
+	function bootstrap($rootScope, $transitions) {
 		if (typeof $rootScope === "undefined") {
 			return false;
 		}
@@ -202,7 +203,7 @@
 		//
 		// Angular's UI-router
 		//
-		$rootScope.$on("$stateChangeStart", function(event, toState, toParams, fromState, fromParams) {
+		function stateChangeStart(event, toState, toParams, fromState, fromParams) {
 			if (!enabled) {
 				hadMissedRouteChange = true;
 				return;
@@ -215,7 +216,16 @@
 			// Since we've seen a $stateChangeStart, we don't need to have
 			// $locationChangeStarts also trigger navigations.
 			disableLocationChangeTrigger = true;
-		});
+		}
+		if ($transitions) {
+			$transitions.onStart({}, function(transition) {
+				var to = transition.to();
+				var from = transition.from();
+				stateChangeStart("duh", to.name, to.params, from.name, from.params);
+			});
+		} else {
+			$rootScope.$on("$stateChangeStart", stateChangeStart);
+		}
 
 		return true;
 	}
@@ -237,7 +247,8 @@
 		/**
 		 * Hooks Boomerang into the AngularJS lifecycle events
 		 *
-		 * @param {object} $rootScope AngularJS `$rootScope` dependecy
+		 * @param {object} $rootScope AngularJS `$rootScope` dependency
+		 * @param {object} $transitions UI-Router's `$transitions` dependency
 		 * @param {boolean} [hadRouteChange] Whether or not there was a route change
 		 * event prior to this `hook()` call
 		 * @param {object} [options] Options
@@ -245,12 +256,12 @@
 		 * @returns {@link BOOMR.plugins.Angular} The Angular plugin for chaining
 		 * @memberof BOOMR.plugins.Angular
 		 */
-		hook: function($rootScope, hadRouteChange, options) {
+		hook: function($rootScope, $transitions, hadRouteChange, options) {
 			if (hooked) {
 				return this;
 			}
 
-			if (bootstrap($rootScope)) {
+			if (bootstrap($rootScope, $transitions)) {
 				BOOMR.plugins.SPA.hook(hadRouteChange, options);
 
 				hooked = true;
