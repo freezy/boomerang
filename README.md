@@ -489,3 +489,4 @@ Boomerang is brought to you by:
 * many independent contributors whose contributions are cemented in our git history
 
 To help out, please read our [contributing](https://akamai.github.io/boomerang/tutorial-contributing.html) page.
+
